@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import unittest
 try:
     unittest.skip
@@ -6,9 +6,9 @@ except AttributeError:
     import unittest2 as unittest
 import doctest
 import os
-import commands
-import cPickle
-from StringIO import StringIO
+import subprocess
+import pickle
+from io import StringIO
 import subprocess
 import sys
 
@@ -137,7 +137,7 @@ class TestVcfSpecs(unittest.TestCase):
         """Test VCF inputs with ##contig inputs containing only IDs. produced by bcftools 1.2+
         """
         reader = vcf.Reader(fh("contig_idonly.vcf"))
-        for cid, contig in reader.contigs.items():
+        for cid, contig in list(reader.contigs.items()):
             if cid == "1":
                 assert contig.length is None
             elif cid == "2":
@@ -955,7 +955,7 @@ class TestRecord(unittest.TestCase):
     def test_pickle(self):
         reader = vcf.Reader(fh('example-4.0.vcf'))
         for var in reader:
-            self.assertEqual(cPickle.loads(cPickle.dumps(var)), var)
+            self.assertEqual(pickle.loads(pickle.dumps(var)), var)
 
 
     def assert_has_expected_coordinates(
@@ -1498,7 +1498,7 @@ class TestFilter(unittest.TestCase):
     @unittest.skip("test currently broken")
     def testApplyFilter(self):
         # FIXME: broken with distribute
-        s, out = commands.getstatusoutput('python scripts/vcf_filter.py --site-quality 30 test/example-4.0.vcf sq')
+        s, out = subprocess.getstatusoutput('python scripts/vcf_filter.py --site-quality 30 test/example-4.0.vcf sq')
         #print(out)
         self.assertEqual(s, 0)
         buf = StringIO()
@@ -1528,7 +1528,7 @@ class TestFilter(unittest.TestCase):
     @unittest.skip("test currently broken")
     def testApplyMultipleFilters(self):
         # FIXME: broken with distribute
-        s, out = commands.getstatusoutput('python scripts/vcf_filter.py --site-quality 30 '
+        s, out = subprocess.getstatusoutput('python scripts/vcf_filter.py --site-quality 30 '
         '--genotype-quality 50 test/example-4.0.vcf sq mgq')
         self.assertEqual(s, 0)
         #print(out)
@@ -1599,7 +1599,7 @@ class TestUtils(unittest.TestCase):
                 assert recs[1] is not None
 
         # test files with many chromosomes, set 'vcf_record_sort_key' to define chromosome order
-        chr_order = map(str, range(1, 30)) + ['X', 'Y', 'M']
+        chr_order = list(map(str, list(range(1, 30)))) + ['X', 'Y', 'M']
         get_key = lambda r: (chr_order.index(r.CHROM.replace('chr','')), r.POS)
         reader1 = vcf.Reader(fh('issue-140-file1.vcf'))
         reader2 = vcf.Reader(fh('issue-140-file2.vcf'))
